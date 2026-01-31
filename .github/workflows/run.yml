@@ -228,63 +228,29 @@ jobs:
 
       - name: Generate `sing-box` rule_set (srs) and move .json files
         run: |
-          if [[ "${{ env.singbox_core_latest_version }}" == "${{ env.singbox_core_release_version }}" ]]; then
-            # Setting `sing-box` core&ruleset environment variables
-            echo "singbox_core_old_version=${{ env.singbox_core_compatible_version }}" >> $GITHUB_ENV
-            echo "singbox_core_new_version=${{ env.singbox_core_latest_version }}" >> $GITHUB_ENV
-            echo "singbox_ruleset_old_version=${{ env.singbox_rules_compatible_version }}" >> $GITHUB_ENV
-            echo "singbox_ruleset_new_version=${{ env.singbox_rules_latest_version }}" >> $GITHUB_ENV
-            echo "singbox_equal=true" >> $GITHUB_ENV
+          # Get latest official sing-box version
+          LATEST_TAG=$(curl -sSL https://api.github.com/repos/SagerNet/sing-box/releases/latest | jq -r '.tag_name')
+          LATEST_VERSION=${LATEST_TAG#v}
+          echo "Using sing-box version: ${LATEST_VERSION}"
+          
+          # Set variables for subsequent steps
+          echo "singbox_core_old_version=${{ env.singbox_core_compatible_version }}" >> $GITHUB_ENV
+          echo "singbox_core_new_version=${LATEST_VERSION}" >> $GITHUB_ENV
+          echo "singbox_ruleset_old_version=${{ env.singbox_rules_compatible_version }}" >> $GITHUB_ENV
+          echo "singbox_ruleset_new_version=2" >> $GITHUB_ENV
+          echo "singbox_equal=true" >> $GITHUB_ENV
 
-            # Generate `sing-box` rule_set (compatible)
-            curl -L "https://github.com/SagerNet/sing-box/releases/download/v${{ env.singbox_core_compatible_version }}/sing-box-${{ env.singbox_core_compatible_version }}-linux-amd64.tar.gz" | tar -zx -C ./tools/
-            mv -f "./tools/sing-box-${{ env.singbox_core_compatible_version }}-linux-amd64/sing-box" ./tools/sing-box
-            mkdir -p ./sing-box-ruleset-compatible/
-            cd ./tools/
-            sed -i 's/"version": 1/"version": ${{ env.singbox_rules_compatible_version }}/' ./convert.sh
-            chmod +x ./convert.sh && ./convert.sh
-            mv -f ./*.json ./*.srs ../sing-box-ruleset-compatible/
-            rm -rf ./sing-box*
-
-            # Generate `sing-box` rule_set
-            cd ../
-            curl -L "https://github.com/DustinWin/proxy-tools/releases/download/sing-box/sing-box-release-linux-amd64v3.tar.gz" | tar -zx -C ./tools/
-            mv -f "./tools/CrashCore" ./tools/sing-box
-            mkdir -p ./sing-box-ruleset/
-            cd ./tools/
-            sed -i 's/"version": ${{ env.singbox_rules_compatible_version }}/"version": ${{ env.singbox_rules_latest_version }}/' ./convert.sh
-            chmod +x ./convert.sh && ./convert.sh
-            mv -f ./*.json ./*.srs ../sing-box-ruleset/
-            rm -rf ./sing-box* ./rules*
-          else
-            # Setting `sing-box` core&ruleset environment variables
-            echo "singbox_core_old_version=${{ env.singbox_core_compatible_version }}" >> $GITHUB_ENV
-            echo "singbox_core_new_version=${{ env.singbox_core_latest_version }}" >> $GITHUB_ENV
-            echo "singbox_ruleset_old_version=${{ env.singbox_rules_compatible_version }}" >> $GITHUB_ENV
-            echo "singbox_ruleset_new_version=${{ env.singbox_rules_latest_version }}" >> $GITHUB_ENV
-            echo "singbox_equal=false" >> $GITHUB_ENV
-
-            # Generate `sing-box` rule_set (compatible)
-            wget "https://github.com/DustinWin/proxy-tools/releases/download/sing-box/sing-box-release-linux-amd64v3.tar.gz" -O - | tar -zxf - -C ./tools/
-            mv -f "./tools/CrashCore" ./tools/sing-box
-            mkdir -p ./sing-box-ruleset-compatible/
-            cd ./tools/
-            sed -i 's/"version": 1/"version": ${{ env.singbox_rules_compatible_version }}/' ./convert.sh
-            chmod +x ./convert.sh && ./convert.sh
-            mv -f ./*.json ./*.srs ../sing-box-ruleset-compatible/
-            rm -rf ./sing-box*
-
-            # Generate `sing-box` rule_set
-            cd ../
-            curl -L "https://github.com/DustinWin/proxy-tools/releases/download/sing-box/sing-box-dev-linux-amd64v3.tar.gz" | tar -zx -C ./tools/
-            mv -f "./tools/CrashCore" ./tools/sing-box
-            mkdir -p ./sing-box-ruleset/
-            cd ./tools/
-            sed -i 's/"version": ${{ env.singbox_rules_compatible_version }}/"version": ${{ env.singbox_rules_latest_version }}/' ./convert.sh
-            chmod +x ./convert.sh && ./convert.sh
-            mv -f ./*.json ./*.srs ../sing-box-ruleset/
-            rm -rf ./sing-box* ./rules*
-          fi
+          # Download official latest sing-box
+          curl -L "https://github.com/SagerNet/sing-box/releases/download/${LATEST_TAG}/sing-box-${LATEST_VERSION}-linux-amd64.tar.gz" | tar -zx -C ./tools/
+          mv -f "./tools/sing-box-${LATEST_VERSION}-linux-amd64/sing-box" ./tools/sing-box
+          
+          mkdir -p ./sing-box-ruleset/
+          cd ./tools/
+          # Ensure rule-set version is set to 2 for latest features
+          sed -i 's/"version": [0-9]*/"version": 2/' ./convert.sh
+          chmod +x ./convert.sh && ./convert.sh
+          mv -f ./*.json ./*.srs ../sing-box-ruleset/
+          rm -rf ./sing-box* ./rules*
 
       - name: Release and upload `mihomo-geodata` assets
         uses: svenstaro/upload-release-action@v2
