@@ -36,22 +36,26 @@ jobs:
           done
 
           mkdir -p ./tools/rules/fakeip-filter/
-          curl -sSL "${domains_download_url}/fakeip-filter.list" | awk '!/(DOMAIN-REGEX,|ntp|stun|time)/' > ./tmp/temp-fakeip-filter-rules.txt
+          # Fix: Indent heredoc content to satisfy YAML syntax
           cat <<EOF >> ./tmp/temp-fakeip-filter-rules.txt
-DOMAIN-KEYWORD,ntp
-DOMAIN-KEYWORD,stun
-DOMAIN-KEYWORD,time
+          DOMAIN-KEYWORD,ntp
+          DOMAIN-KEYWORD,stun
+          DOMAIN-KEYWORD,time
 EOF
-          curl -sSL "${domains_download_url}/fakeip-filter.list" | awk '/DOMAIN-REGEX,/ && !/(ntp|stun|time)/' >> ./tmp/temp-fakeip-filter-rules.txt
+          # Remove the temporary leading spaces added for YAML indentation
+          sed -i 's/^          //' ./tmp/temp-fakeip-filter-rules.txt
+          
+          curl -sSL "${domains_download_url}/fakeip-filter.list" | awk '!/(DOMAIN-REGEX,|ntp|stun|time)/' >> ./tmp/temp-fakeip-filter-rules.txt
           sort --ignore-case ./tmp/temp-fakeip-filter-rules.txt > ./tools/rules/fakeip-filter/fakeip-filter.list
 
           mkdir -p ./tools/rules/fakeip-filter-lite/
-          curl -sSL "${domains_download_url}/fakeip-filter-lite.list" | awk '!/(DOMAIN-REGEX,|ntp|stun|time)/' > ./tmp/temp-fakeip-filter-lite-rules.txt
           cat <<EOF >> ./tmp/temp-fakeip-filter-lite-rules.txt
-DOMAIN-KEYWORD,ntp
-DOMAIN-KEYWORD,stun
-DOMAIN-KEYWORD,time
+          DOMAIN-KEYWORD,ntp
+          DOMAIN-KEYWORD,stun
+          DOMAIN-KEYWORD,time
 EOF
+          sed -i 's/^          //' ./tmp/temp-fakeip-filter-lite-rules.txt
+          
           sort --ignore-case ./tmp/temp-fakeip-filter-lite-rules.txt > ./tools/rules/fakeip-filter-lite/fakeip-filter-lite.list
 
           mkdir -p ./tools/rules/applications/
@@ -75,8 +79,7 @@ EOF
           
           mkdir -p ./sing-box-ruleset/
           cd ./tools/
-          sed -i 's/"version": [0-9]*/"version": 2/' ./convert.sh
-          # Convert line endings if necessary and run
+          sed -i 's/"version": [1-9]*/"version": 2/' ./convert.sh
           sed -i 's/\r$//' ./convert.sh
           chmod +x ./convert.sh && ./convert.sh
           mv -f ./*.srs ../sing-box-ruleset/
