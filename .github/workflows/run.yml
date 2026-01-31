@@ -38,9 +38,9 @@ jobs:
           mkdir -p ./tools/rules/fakeip-filter/
           curl -sSL "${domains_download_url}/fakeip-filter.list" | awk '!/(DOMAIN-REGEX,|ntp|stun|time)/' > ./tmp/temp-fakeip-filter-rules.txt
           cat <<EOF >> ./tmp/temp-fakeip-filter-rules.txt
-          DOMAIN-KEYWORD,ntp
-          DOMAIN-KEYWORD,stun
-          DOMAIN-KEYWORD,time
+DOMAIN-KEYWORD,ntp
+DOMAIN-KEYWORD,stun
+DOMAIN-KEYWORD,time
 EOF
           curl -sSL "${domains_download_url}/fakeip-filter.list" | awk '/DOMAIN-REGEX,/ && !/(ntp|stun|time)/' >> ./tmp/temp-fakeip-filter-rules.txt
           sort --ignore-case ./tmp/temp-fakeip-filter-rules.txt > ./tools/rules/fakeip-filter/fakeip-filter.list
@@ -48,9 +48,9 @@ EOF
           mkdir -p ./tools/rules/fakeip-filter-lite/
           curl -sSL "${domains_download_url}/fakeip-filter-lite.list" | awk '!/(DOMAIN-REGEX,|ntp|stun|time)/' > ./tmp/temp-fakeip-filter-lite-rules.txt
           cat <<EOF >> ./tmp/temp-fakeip-filter-lite-rules.txt
-          DOMAIN-KEYWORD,ntp
-          DOMAIN-KEYWORD,stun
-          DOMAIN-KEYWORD,time
+DOMAIN-KEYWORD,ntp
+DOMAIN-KEYWORD,stun
+DOMAIN-KEYWORD,time
 EOF
           sort --ignore-case ./tmp/temp-fakeip-filter-lite-rules.txt > ./tools/rules/fakeip-filter-lite/fakeip-filter-lite.list
 
@@ -76,6 +76,8 @@ EOF
           mkdir -p ./sing-box-ruleset/
           cd ./tools/
           sed -i 's/"version": [0-9]*/"version": 2/' ./convert.sh
+          # Convert line endings if necessary and run
+          sed -i 's/\r$//' ./convert.sh
           chmod +x ./convert.sh && ./convert.sh
           mv -f ./*.srs ../sing-box-ruleset/
           rm -rf ./sing-box* ./rules*
@@ -101,8 +103,8 @@ EOF
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git checkout -b sing-box-ruleset
-          git add . && git commit -m "sing-box 内核 rule_set 规则集文件更新于 ${update_version}"
-          git remote add origin "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
+          git add . && git commit -m "sing-box 内核 rule_set 规则集文件更新于 ${{ env.update_version }}"
+          git remote add origin "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}" || git remote set-url origin "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
           git push -f origin sing-box-ruleset
 
       - name: Delete old workflow runs
