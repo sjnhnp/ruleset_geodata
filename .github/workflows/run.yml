@@ -77,32 +77,3 @@ jobs:
           # Move only srs files
           mv -f ./*.srs ../sing-box-ruleset/
           rm -rf ./rules*
-
-      - name: Release and upload `sing-box-ruleset` assets
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          release_name: sing-box-ruleset
-          tag: sing-box-ruleset
-          overwrite: true
-          body: |
-            sing-box rule_set (.srs)
-            Core: v${{ env.singbox_core_new_version }}
-            Update: ${{ env.update_version }}
-          file_glob: true
-          file: ./sing-box-ruleset/*
-
-      - name: Commit and push `sing-box-ruleset` branch
-        run: |
-          rm -rf ./tmp_push/
-          mkdir ./tmp_push/
-          cp -r ./sing-box-ruleset/* ./tmp_push/
-          cd ./tmp_push/
-          git init
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git checkout -b sing-box-ruleset
-          git add .
-          git commit -m "sing-box rule_set update at ${{ env.update_version }}"
-          # Use force push to the specific branch
-          git push -f "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}" sing-box-ruleset
