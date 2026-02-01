@@ -56,8 +56,9 @@ jobs:
 
       - name: Generate `sing-box` rule_set (srs)
         run: |
-          LATEST_TAG="v1.12.17"
-          LATEST_VERSION="1.12.17"
+          # Get latest version of sing-box
+          LATEST_TAG=$(curl -s https://api.github.com/repos/SagerNet/sing-box/releases/latest | grep '"tag_name":' | sed -E 's/.*"tag_name": "([^"]+)".*/\1/')
+          LATEST_VERSION=$(echo $LATEST_TAG | sed 's/^v//')
           echo "singbox_core_new_version=${LATEST_VERSION}" >> $GITHUB_ENV
 
           # Use a more robust download and extraction logic
