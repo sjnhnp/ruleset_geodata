@@ -137,3 +137,21 @@ jobs:
           git commit -m "Update sing-box and mihomo rule-set (${{ env.update_version }})"
           git push -u origin master
 
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: mihomo-ruleset
+          body: |
+            更新时间: ${{ env.update_version }}
+            
+            包含规则：
+            - sing-box 规则集 (.srs)
+            - mihomo 规则集 (.mrs)
+            - 秋风去广告规则 (awavenue.srs)
+          files: |
+            ./sing-box-ruleset/*.srs
+            ./sing-box-ruleset/*.mrs
+            ./sing-box-ruleset/*.list
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
