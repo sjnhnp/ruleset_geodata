@@ -26,23 +26,25 @@ jobs:
 
       - name: Download rule source files
         run: |
-          mkdir -p ./tools/rules/ ./tmp/
+          mkdir -p ./tools/rules/ ./tools/domains/ ./tools/ips/ ./tmp/
           domains=(private ads trackerslist microsoft-cn apple-cn google-cn games-cn netflix disney max primevideo appletv youtube tiktok bilibili spotify media games ai networktest tld-proxy gfw proxy cn cn-lite)
           ips=(netflixip mediaip gamesip privateip cnip telegramip)
 
+          # Download for sing-box
           for domain in "${domains[@]}"; do
             mkdir -p "./tools/rules/${domain}/"
             curl -sSL "${domains_download_url}/${domain}.list" > "./tools/rules/${domain}/${domain}.list"
           done
 
           mkdir -p ./tools/rules/fakeip-filter/
-          # Use printf for better YAML compatibility and avoid heredoc indentation issues
-          printf "DOMAIN-KEYWORD,ntp\nDOMAIN-KEYWORD,stun\nDOMAIN-KEYWORD,time\n" > ./tmp/temp-fakeip-filter-rules.txt
-          curl -sSL "${domains_download_url}/fakeip-filter.list" | awk '!/(DOMAIN-REGEX,|ntp|stun|time)/' >> ./tmp/temp-fakeip-filter-rules.txt
+          curl -sSL "${domains_download_url}/fakeip-filter.list" | awk '!/(DOMAIN-REGEX,|ntp|stun|time)/' > ./tmp/temp-fakeip-filter-rules.txt
+          printf "DOMAIN-KEYWORD,ntp\nDOMAIN-KEYWORD,stun\nDOMAIN-KEYWORD,time\n" >> ./tmp/temp-fakeip-filter-rules.txt
+          curl -sSL "${domains_download_url}/fakeip-filter.list" | awk '/DOMAIN-REGEX,/ && !/(ntp|stun|time)/' >> ./tmp/temp-fakeip-filter-rules.txt
           sort --ignore-case ./tmp/temp-fakeip-filter-rules.txt > ./tools/rules/fakeip-filter/fakeip-filter.list
 
           mkdir -p ./tools/rules/fakeip-filter-lite/
-          printf "DOMAIN-KEYWORD,ntp\nDOMAIN-KEYWORD,stun\nDOMAIN-KEYWORD,time\n" > ./tmp/temp-fakeip-filter-lite-rules.txt
+          curl -sSL "${domains_download_url}/fakeip-filter-lite.list" | awk '!/(DOMAIN-REGEX,|ntp|stun|time)/' > ./tmp/temp-fakeip-filter-lite-rules.txt
+          printf "DOMAIN-KEYWORD,ntp\nDOMAIN-KEYWORD,stun\nDOMAIN-KEYWORD,time\n" >> ./tmp/temp-fakeip-filter-lite-rules.txt
           sort --ignore-case ./tmp/temp-fakeip-filter-lite-rules.txt > ./tools/rules/fakeip-filter-lite/fakeip-filter-lite.list
 
           mkdir -p ./tools/rules/applications/
@@ -52,7 +54,54 @@ jobs:
             mkdir -p "./tools/rules/${ip}/"
             curl -sSL "${ips_download_url}/${ip}.list" > "./tools/rules/${ip}/${ip}.list"
           done
+
+          # Download for mihomo
+          for domain in "${domains[@]}"; do
+            mkdir -p "./tools/domains/${domain}/"
+            curl -sSL "${domains_download_url}/${domain}.list" | awk '/(DOMAIN,|DOMAIN-SUFFIX,)/' | sed -e 's/DOMAIN,//' -e 's/DOMAIN-SUFFIX,/+\./' > "./tools/domains/${domain}/${domain}.list"
+            curl -sSL "${domains_download_url}/${domain}.list" | awk '/DOMAIN-REGEX,/' | sed -e 's/\\s/ /' -e 's/\\./\./g' -e 's/\[^.\]+/*/g' -e 's/\^\.\*/\^+/' -e 's/.*\^//; s/\$//' >> "./tools/domains/${domain}/${domain}.list"
+          done
+
+          mkdir -p ./tools/domains/fakeip-filter/
+          curl -sSL "${domains_download_url}/fakeip-filter.list" | awk '!/DOMAIN-REGEX,/' | sed -e 's/DOMAIN,//' -e 's/DOMAIN-SUFFIX,/+\./' > ./tmp/temp-fakeip-filter-mihomo.txt
+          printf "+.ntp\n+.stun\n+.time\n" >> ./tmp/temp-fakeip-filter-mihomo.txt
+          curl -sSL "${domains_download_url}/fakeip-filter.list" | awk '/DOMAIN-REGEX,/' | sed -e 's/\\s/ /' -e 's/\\./\./g' -e 's/\[^.\]+/*/g' -e 's/\^\.\*/\^+/' -e 's/.*\^//; s/\$//' >> ./tmp/temp-fakeip-filter-mihomo.txt
+          sort --ignore-case ./tmp/temp-fakeip-filter-mihomo.txt > ./tools/domains/fakeip-filter/fakeip-filter.list
+
+          mkdir -p ./tools/domains/fakeip-filter-lite/
+          curl -sSL "${domains_download_url}/fakeip-filter-lite.list" | awk '!/DOMAIN-REGEX,/' | sed -e 's/DOMAIN,//' -e 's/DOMAIN-SUFFIX,/+\./' > ./tmp/temp-fakeip-filter-lite-mihomo.txt
+          printf "+.ntp\n+.stun\n+.time\n" >> ./tmp/temp-fakeip-filter-lite-mihomo.txt
+          sort --ignore-case ./tmp/temp-fakeip-filter-lite-mihomo.txt > ./tools/domains/fakeip-filter-lite/fakeip-filter-lite.list
+
+          for ip in "${ips[@]}"; do
+            mkdir -p "./tools/ips/${ip}/"
+            curl -sSL "${ips_download_url}/${ip}.list" | sed 's/.*,//' > "./tools/ips/${ip}/${ip}.list"
+          done
+
+          # Download AWAvenue Ads Rule
+          mkdir -p ./tools/awavenue/
+          curl -sSL "https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/refs/heads/main/Filters/AWAvenue-Ads-Rule-Singbox.json" > ./tools/awavenue/awavenue.json
           rm -rf ./tmp*
+
+      - name: Generate `mihomo` rule-set (mrs)
+        run: |
+          mkdir -p ./sing-box-ruleset/
+          curl -L https://github.com/DustinWin/proxy-tools/releases/download/mihomo/mihomo-meta-linux-amd64-v3.tar.gz | tar -zx -C ./tools/
+          mv -f ./tools/CrashCore ./tools/mihomo
+          chmod +x ./tools/mihomo
+          
+          cd ./tools/
+          list=($(ls ./domains/))
+          for ((i = 0; i < ${#list[@]}; i++)); do
+            ./mihomo convert-ruleset domain text "./domains/${list[i]}/${list[i]}.list" ../sing-box-ruleset/${list[i]}.mrs
+          done
+
+          list=($(ls ./ips/))
+          for ((i = 0; i < ${#list[@]}; i++)); do
+            ./mihomo convert-ruleset ipcidr text "./ips/${list[i]}/${list[i]}.list" ../sing-box-ruleset/${list[i]}.mrs
+          done
+          
+          rm -rf ./mihomo ./domains/ ./ips/
 
       - name: Generate `sing-box` rule_set (srs)
         run: |
@@ -67,13 +116,24 @@ jobs:
           find ./tools/sb_bin/ -name "sing-box" -type f -exec mv {} ./tools/sing-box \;
           rm -rf ./tools/sb_bin/
           
-          mkdir -p ./sing-box-ruleset/
           cd ./tools/
-          # Ensure rule-set version is 2
-          sed -i 's/"version": [1-9]*/"version": 2/' ./convert.sh
           # Fix potential line ending issues
           sed -i 's/\r$//' ./convert.sh
           chmod +x ./convert.sh && ./convert.sh
+
+          # Compile AWAvenue for sing-box
+          ./sing-box rule-set compile --output ../sing-box-ruleset/awavenue.srs ./awavenue/awavenue.json
+
           # Move only srs files
           mv -f ./*.srs ../sing-box-ruleset/
-          rm -rf ./rules*
+          rm -rf ./rules* ./awavenue/
+
+
+      - name: Git push assets to "master" branch
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git add ./sing-box-ruleset/*
+          git commit -m "Update sing-box and mihomo rule-set (${{ env.update_version }})"
+          git push -u origin master
+
