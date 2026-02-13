@@ -133,12 +133,20 @@ jobs:
         run: |
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          # 清理中间产生的 .json 文件，避免干扰
+          rm -f ./tools/*.json
           git add ./sing-box-ruleset/*
-          git commit -m "Update sing-box and mihomo rule-set (${{ env.update_version }})"
-          git push -u origin master
+          # 检查是否有文件变动，只有在有变动时才 commit
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update sing-box and mihomo rule-set (${{ env.update_version }})"
+            git push -u origin master
+          fi
 
       - name: Upload to Release
         uses: softprops/action-gh-release@v2
+        if: always() # 即使没有代码变动，也可以强制运行（或者您也可以改为有变动才运行）
         with:
           tag_name: sing-box-ruleset
           body: |
