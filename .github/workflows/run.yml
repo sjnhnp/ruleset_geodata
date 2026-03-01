@@ -20,8 +20,8 @@ jobs:
           UPDATE_VER=$(date -d '+8 hours' +%Y-%m-%d)
           echo "update_version=$UPDATE_VER" >> ${GITHUB_ENV}
           echo "update_version=$UPDATE_VER" >> ${GITHUB_OUTPUT}
-          echo "domains_download_url=https://raw.githubusercontent.com/DustinWin/ruleset_geodata/mihomo-ruleset" >> ${GITHUB_ENV}
-          echo "ips_download_url=https://raw.githubusercontent.com/DustinWin/ruleset_geodata/mihomo-ruleset" >> ${GITHUB_ENV}
+          echo "domains_download_url=https://github.com/DustinWin/domain-list-custom/releases/download/domains" >> ${GITHUB_ENV}
+          echo "ips_download_url=https://github.com/DustinWin/geoip/releases/download/ips" >> ${GITHUB_ENV}
         shell: bash
 
       - name: Clone Repository
