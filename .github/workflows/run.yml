@@ -15,8 +15,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Set variables
+        id: vars
         run: |
-          echo "update_version=$(date -d '+8 hours' +%Y-%m-%d)" >> ${GITHUB_ENV}
+          UPDATE_VER=$(date -d '+8 hours' +%Y-%m-%d)
+          echo "update_version=$UPDATE_VER" >> ${GITHUB_ENV}
+          echo "update_version=$UPDATE_VER" >> ${GITHUB_OUTPUT}
           echo "domains_download_url=https://github.com/DustinWin/domain-list-custom/releases/download/domains" >> ${GITHUB_ENV}
           echo "ips_download_url=https://github.com/DustinWin/geoip/releases/download/ips" >> ${GITHUB_ENV}
         shell: bash
@@ -153,7 +156,7 @@ jobs:
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "Update sing-box and mihomo rule-set (${{ env.update_version }})"
+            git commit -m "Update sing-box and mihomo rule-set ($update_version)"
             git push -u origin master
           fi
 
@@ -163,7 +166,7 @@ jobs:
         with:
           tag_name: sing-box-ruleset
           body: |
-            更新时间: ${{ env.update_version }}
+            更新时间: ${{ steps.vars.outputs.update_version }}
             
             包含规则：
             - sing-box 规则集 (.srs)
