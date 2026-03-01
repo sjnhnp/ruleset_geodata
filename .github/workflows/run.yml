@@ -20,12 +20,28 @@ jobs:
           UPDATE_VER=$(date -d '+8 hours' +%Y-%m-%d)
           echo "update_version=$UPDATE_VER" >> ${GITHUB_ENV}
           echo "update_version=$UPDATE_VER" >> ${GITHUB_OUTPUT}
-          echo "domains_download_url=https://raw.githubusercontent.com/DustinWin/domain-list-custom/domains" >> ${GITHUB_ENV}
-          echo "ips_download_url=https://raw.githubusercontent.com/DustinWin/geoip/ips" >> ${GITHUB_ENV}
         shell: bash
 
       - name: Clone Repository
         uses: actions/checkout@v6
+
+      - name: Checkout DustinWin/domain-list-custom
+        uses: actions/checkout@v6
+        with:
+          repository: DustinWin/domain-list-custom
+          path: custom
+
+      - name: Checkout DustinWin/geoip
+        uses: actions/checkout@v6
+        with:
+          repository: DustinWin/geoip
+          path: geoip
+
+      - name: Checkout v2fly/domain-list-community
+        uses: actions/checkout@v6
+        with:
+          repository: v2fly/domain-list-community
+          path: community
 
       - name: Download rule source files
         run: |
@@ -33,53 +49,55 @@ jobs:
           domains=(private ads trackerslist microsoft-cn apple-cn google-cn games-cn netflix disney max primevideo appletv youtube tiktok bilibili spotify media games ai networktest tld-proxy gfw proxy cn cn-lite)
           ips=(netflixip mediaip gamesip privateip cnip telegramip)
 
-          # Download for sing-box
+          # Copy for sing-box
           for domain in "${domains[@]}"; do
             mkdir -p "./tools/rules/${domain}/"
-            curl -sSLf --retry 5 --retry-delay 5 --retry-all-errors "${domains_download_url}/${domain}.list" > "./tools/rules/${domain}/${domain}.list"
+            cp -f "./custom/domains/${domain}.list" "./tools/rules/${domain}/${domain}.list"
           done
 
           mkdir -p ./tools/rules/fakeip-filter/
-          curl -sSLf --retry 5 --retry-delay 5 --retry-all-errors "${domains_download_url}/fakeip-filter.list" | awk '!/(DOMAIN-REGEX,|ntp|stun|time)/' > ./tmp/temp-fakeip-filter-rules.txt
+          cp -f "./custom/domains/fakeip-filter.list" ./tmp/temp-fakeip-filter-rules.txt
+          awk '!/(DOMAIN-REGEX,|ntp|stun|time)/' ./tmp/temp-fakeip-filter-rules.txt > ./tmp/temp-fakeip-filter-rules.txt
           printf "DOMAIN-KEYWORD,ntp\nDOMAIN-KEYWORD,stun\nDOMAIN-KEYWORD,time\n" >> ./tmp/temp-fakeip-filter-rules.txt
-          curl -sSLf --retry 5 --retry-delay 5 --retry-all-errors "${domains_download_url}/fakeip-filter.list" | awk '/DOMAIN-REGEX,/ && !/(ntp|stun|time)/' >> ./tmp/temp-fakeip-filter-rules.txt
+          awk '/DOMAIN-REGEX,/ && !/(ntp|stun|time)/' ./custom/domains/fakeip-filter.list >> ./tmp/temp-fakeip-filter-rules.txt
           sort --ignore-case ./tmp/temp-fakeip-filter-rules.txt > ./tools/rules/fakeip-filter/fakeip-filter.list
 
           mkdir -p ./tools/rules/fakeip-filter-lite/
-          curl -sSLf --retry 5 --retry-delay 5 --retry-all-errors "${domains_download_url}/fakeip-filter-lite.list" | awk '!/(DOMAIN-REGEX,|ntp|stun|time)/' > ./tmp/temp-fakeip-filter-lite-rules.txt
+          cp -f "./custom/domains/fakeip-filter-lite.list" ./tmp/temp-fakeip-filter-lite-rules.txt
+          awk '!/(DOMAIN-REGEX,|ntp|stun|time)/' ./tmp/temp-fakeip-filter-lite-rules.txt > ./tmp/temp-fakeip-filter-lite-rules.txt
           printf "DOMAIN-KEYWORD,ntp\nDOMAIN-KEYWORD,stun\nDOMAIN-KEYWORD,time\n" >> ./tmp/temp-fakeip-filter-lite-rules.txt
           sort --ignore-case ./tmp/temp-fakeip-filter-lite-rules.txt > ./tools/rules/fakeip-filter-lite/fakeip-filter-lite.list
 
           mkdir -p ./tools/rules/applications/
-          curl -sSLf --retry 5 --retry-delay 5 --retry-all-errors "${domains_download_url}/applications.list" > "./tools/rules/applications/applications.list"
+          cp -f "./custom/domains/applications.list" "./tools/rules/applications/applications.list"
 
           for ip in "${ips[@]}"; do
             mkdir -p "./tools/rules/${ip}/"
-            curl -sSLf --retry 5 --retry-delay 5 --retry-all-errors "${ips_download_url}/${ip}.list" > "./tools/rules/${ip}/${ip}.list"
+            cp -f "./geoip/ips/${ip}.list" "./tools/rules/${ip}/${ip}.list"
           done
 
-          # Download for mihomo
+          # Copy for mihomo
           for domain in "${domains[@]}"; do
             mkdir -p "./tools/domains/${domain}/"
             # Ensure folder exists even if no rules match
-            curl -sSLf --retry 5 --retry-delay 5 --retry-all-errors "${domains_download_url}/${domain}.list" | awk '/(DOMAIN,|DOMAIN-SUFFIX,)/' | sed -e 's/DOMAIN,//' -e 's/DOMAIN-SUFFIX,/+\./' > "./tools/domains/${domain}/${domain}.list"
-            curl -sSLf --retry 5 --retry-delay 5 --retry-all-errors "${domains_download_url}/${domain}.list" | awk '/DOMAIN-REGEX,/' | sed -e 's/\\s/ /' -e 's/\\./\./g' -e 's/\[^.\]+/*/g' -e 's/\^\.\*/\^+/' -e 's/.*\^//; s/\$//' >> "./tools/domains/${domain}/${domain}.list"
+            awk '/(DOMAIN,|DOMAIN-SUFFIX,)/' "./custom/domains/${domain}.list" | sed -e 's/DOMAIN,//' -e 's/DOMAIN-SUFFIX,/+\./' > "./tools/domains/${domain}/${domain}.list"
+            awk '/DOMAIN-REGEX,/' "./custom/domains/${domain}.list" | sed -e 's/\\s/ /' -e 's/\\./\./g' -e 's/\[^.\]+/*/g' -e 's/\^\.\*/\^+/' -e 's/.*\^//; s/\$//' >> "./tools/domains/${domain}/${domain}.list"
           done
 
           mkdir -p ./tools/domains/fakeip-filter/
-          curl -sSLf --retry 5 --retry-delay 5 --retry-all-errors "${domains_download_url}/fakeip-filter.list" | awk '!/DOMAIN-REGEX,/' | sed -e 's/DOMAIN,//' -e 's/DOMAIN-SUFFIX,/+\./' > ./tmp/temp-fakeip-filter-mihomo.txt
+          awk '!/DOMAIN-REGEX,/' "./custom/domains/fakeip-filter.list" | sed -e 's/DOMAIN,//' -e 's/DOMAIN-SUFFIX,/+\./' > ./tmp/temp-fakeip-filter-mihomo.txt
           printf "+.ntp\n+.stun\n+.time\n" >> ./tmp/temp-fakeip-filter-mihomo.txt
-          curl -sSLf --retry 5 --retry-delay 5 --retry-all-errors "${domains_download_url}/fakeip-filter.list" | awk '/DOMAIN-REGEX,/' | sed -e 's/\\s/ /' -e 's/\\./\./g' -e 's/\[^.\]+/*/g' -e 's/\^\.\*/\^+/' -e 's/.*\^//; s/\$//' >> ./tmp/temp-fakeip-filter-mihomo.txt
+          awk '/DOMAIN-REGEX,/' "./custom/domains/fakeip-filter.list" | sed -e 's/\\s/ /' -e 's/\\./\./g' -e 's/\[^.\]+/*/g' -e 's/\^\.\*/\^+/' -e 's/.*\^//; s/\$//' >> ./tmp/temp-fakeip-filter-mihomo.txt
           sort --ignore-case ./tmp/temp-fakeip-filter-mihomo.txt > ./tools/domains/fakeip-filter/fakeip-filter.list
 
           mkdir -p ./tools/domains/fakeip-filter-lite/
-          curl -sSLf --retry 5 --retry-delay 5 --retry-all-errors "${domains_download_url}/fakeip-filter-lite.list" | awk '!/DOMAIN-REGEX,/' | sed -e 's/DOMAIN,//' -e 's/DOMAIN-SUFFIX,/+\./' > ./tmp/temp-fakeip-filter-lite-mihomo.txt
+          awk '!/DOMAIN-REGEX,/' "./custom/domains/fakeip-filter-lite.list" | sed -e 's/DOMAIN,//' -e 's/DOMAIN-SUFFIX,/+\./' > ./tmp/temp-fakeip-filter-lite-mihomo.txt
           printf "+.ntp\n+.stun\n+.time\n" >> ./tmp/temp-fakeip-filter-lite-mihomo.txt
           sort --ignore-case ./tmp/temp-fakeip-filter-lite-mihomo.txt > ./tools/domains/fakeip-filter-lite/fakeip-filter-lite.list
 
           for ip in "${ips[@]}"; do
             mkdir -p "./tools/ips/${ip}/"
-            curl -sSLf --retry 5 --retry-delay 5 --retry-all-errors "${ips_download_url}/${ip}.list" | sed 's/.*,//' > "./tools/ips/${ip}/${ip}.list"
+            cp -f "./geoip/ips/${ip}.list" "./tools/ips/${ip}/${ip}.list"
           done
 
           # Download AWAvenue Ads Rule
