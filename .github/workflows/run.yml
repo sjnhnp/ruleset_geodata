@@ -33,54 +33,55 @@ jobs:
           # Download for sing-box
           for domain in "${domains[@]}"; do
             mkdir -p "./tools/rules/${domain}/"
-            curl -sSL "${domains_download_url}/${domain}.list" > "./tools/rules/${domain}/${domain}.list"
+            curl -sSLf "${domains_download_url}/${domain}.list" > "./tools/rules/${domain}/${domain}.list"
           done
 
           mkdir -p ./tools/rules/fakeip-filter/
-          curl -sSL "${domains_download_url}/fakeip-filter.list" | awk '!/(DOMAIN-REGEX,|ntp|stun|time)/' > ./tmp/temp-fakeip-filter-rules.txt
+          curl -sSLf "${domains_download_url}/fakeip-filter.list" | awk '!/(DOMAIN-REGEX,|ntp|stun|time)/' > ./tmp/temp-fakeip-filter-rules.txt
           printf "DOMAIN-KEYWORD,ntp\nDOMAIN-KEYWORD,stun\nDOMAIN-KEYWORD,time\n" >> ./tmp/temp-fakeip-filter-rules.txt
-          curl -sSL "${domains_download_url}/fakeip-filter.list" | awk '/DOMAIN-REGEX,/ && !/(ntp|stun|time)/' >> ./tmp/temp-fakeip-filter-rules.txt
+          curl -sSLf "${domains_download_url}/fakeip-filter.list" | awk '/DOMAIN-REGEX,/ && !/(ntp|stun|time)/' >> ./tmp/temp-fakeip-filter-rules.txt
           sort --ignore-case ./tmp/temp-fakeip-filter-rules.txt > ./tools/rules/fakeip-filter/fakeip-filter.list
 
           mkdir -p ./tools/rules/fakeip-filter-lite/
-          curl -sSL "${domains_download_url}/fakeip-filter-lite.list" | awk '!/(DOMAIN-REGEX,|ntp|stun|time)/' > ./tmp/temp-fakeip-filter-lite-rules.txt
+          curl -sSLf "${domains_download_url}/fakeip-filter-lite.list" | awk '!/(DOMAIN-REGEX,|ntp|stun|time)/' > ./tmp/temp-fakeip-filter-lite-rules.txt
           printf "DOMAIN-KEYWORD,ntp\nDOMAIN-KEYWORD,stun\nDOMAIN-KEYWORD,time\n" >> ./tmp/temp-fakeip-filter-lite-rules.txt
           sort --ignore-case ./tmp/temp-fakeip-filter-lite-rules.txt > ./tools/rules/fakeip-filter-lite/fakeip-filter-lite.list
 
           mkdir -p ./tools/rules/applications/
-          curl -sSL "${domains_download_url}/applications.list" > "./tools/rules/applications/applications.list"
+          curl -sSLf "${domains_download_url}/applications.list" > "./tools/rules/applications/applications.list"
 
           for ip in "${ips[@]}"; do
             mkdir -p "./tools/rules/${ip}/"
-            curl -sSL "${ips_download_url}/${ip}.list" > "./tools/rules/${ip}/${ip}.list"
+            curl -sSLf "${ips_download_url}/${ip}.list" > "./tools/rules/${ip}/${ip}.list"
           done
 
           # Download for mihomo
           for domain in "${domains[@]}"; do
             mkdir -p "./tools/domains/${domain}/"
-            curl -sSL "${domains_download_url}/${domain}.list" | awk '/(DOMAIN,|DOMAIN-SUFFIX,)/' | sed -e 's/DOMAIN,//' -e 's/DOMAIN-SUFFIX,/+\./' > "./tools/domains/${domain}/${domain}.list"
-            curl -sSL "${domains_download_url}/${domain}.list" | awk '/DOMAIN-REGEX,/' | sed -e 's/\\s/ /' -e 's/\\./\./g' -e 's/\[^.\]+/*/g' -e 's/\^\.\*/\^+/' -e 's/.*\^//; s/\$//' >> "./tools/domains/${domain}/${domain}.list"
+            # Ensure folder exists even if no rules match
+            curl -sSLf "${domains_download_url}/${domain}.list" | awk '/(DOMAIN,|DOMAIN-SUFFIX,)/' | sed -e 's/DOMAIN,//' -e 's/DOMAIN-SUFFIX,/+\./' > "./tools/domains/${domain}/${domain}.list"
+            curl -sSLf "${domains_download_url}/${domain}.list" | awk '/DOMAIN-REGEX,/' | sed -e 's/\\s/ /' -e 's/\\./\./g' -e 's/\[^.\]+/*/g' -e 's/\^\.\*/\^+/' -e 's/.*\^//; s/\$//' >> "./tools/domains/${domain}/${domain}.list"
           done
 
           mkdir -p ./tools/domains/fakeip-filter/
-          curl -sSL "${domains_download_url}/fakeip-filter.list" | awk '!/DOMAIN-REGEX,/' | sed -e 's/DOMAIN,//' -e 's/DOMAIN-SUFFIX,/+\./' > ./tmp/temp-fakeip-filter-mihomo.txt
+          curl -sSLf "${domains_download_url}/fakeip-filter.list" | awk '!/DOMAIN-REGEX,/' | sed -e 's/DOMAIN,//' -e 's/DOMAIN-SUFFIX,/+\./' > ./tmp/temp-fakeip-filter-mihomo.txt
           printf "+.ntp\n+.stun\n+.time\n" >> ./tmp/temp-fakeip-filter-mihomo.txt
-          curl -sSL "${domains_download_url}/fakeip-filter.list" | awk '/DOMAIN-REGEX,/' | sed -e 's/\\s/ /' -e 's/\\./\./g' -e 's/\[^.\]+/*/g' -e 's/\^\.\*/\^+/' -e 's/.*\^//; s/\$//' >> ./tmp/temp-fakeip-filter-mihomo.txt
+          curl -sSLf "${domains_download_url}/fakeip-filter.list" | awk '/DOMAIN-REGEX,/' | sed -e 's/\\s/ /' -e 's/\\./\./g' -e 's/\[^.\]+/*/g' -e 's/\^\.\*/\^+/' -e 's/.*\^//; s/\$//' >> ./tmp/temp-fakeip-filter-mihomo.txt
           sort --ignore-case ./tmp/temp-fakeip-filter-mihomo.txt > ./tools/domains/fakeip-filter/fakeip-filter.list
 
           mkdir -p ./tools/domains/fakeip-filter-lite/
-          curl -sSL "${domains_download_url}/fakeip-filter-lite.list" | awk '!/DOMAIN-REGEX,/' | sed -e 's/DOMAIN,//' -e 's/DOMAIN-SUFFIX,/+\./' > ./tmp/temp-fakeip-filter-lite-mihomo.txt
+          curl -sSLf "${domains_download_url}/fakeip-filter-lite.list" | awk '!/DOMAIN-REGEX,/' | sed -e 's/DOMAIN,//' -e 's/DOMAIN-SUFFIX,/+\./' > ./tmp/temp-fakeip-filter-lite-mihomo.txt
           printf "+.ntp\n+.stun\n+.time\n" >> ./tmp/temp-fakeip-filter-lite-mihomo.txt
           sort --ignore-case ./tmp/temp-fakeip-filter-lite-mihomo.txt > ./tools/domains/fakeip-filter-lite/fakeip-filter-lite.list
 
           for ip in "${ips[@]}"; do
             mkdir -p "./tools/ips/${ip}/"
-            curl -sSL "${ips_download_url}/${ip}.list" | sed 's/.*,//' > "./tools/ips/${ip}/${ip}.list"
+            curl -sSLf "${ips_download_url}/${ip}.list" | sed 's/.*,//' > "./tools/ips/${ip}/${ip}.list"
           done
 
           # Download AWAvenue Ads Rule
           mkdir -p ./tools/awavenue/
-          curl -sSL "https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/refs/heads/main/Filters/AWAvenue-Ads-Rule-Singbox.json" > ./tools/awavenue/awavenue.json
+          curl -sSLf "https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/refs/heads/main/Filters/AWAvenue-Ads-Rule-Singbox.json" > ./tools/awavenue/awavenue.json
           rm -rf ./tmp*
 
       - name: Generate `mihomo` rule-set (mrs)
@@ -93,12 +94,22 @@ jobs:
           cd ./tools/
           list=($(ls ./domains/))
           for ((i = 0; i < ${#list[@]}; i++)); do
-            ./mihomo convert-ruleset domain text "./domains/${list[i]}/${list[i]}.list" ../sing-box-ruleset/${list[i]}.mrs
+            if [ -s "./domains/${list[i]}/${list[i]}.list" ]; then
+              echo "Converting domain rule: ${list[i]}"
+              ./mihomo convert-ruleset domain text "./domains/${list[i]}/${list[i]}.list" ../sing-box-ruleset/${list[i]}.mrs
+            else
+              echo "Skipping empty domain rule: ${list[i]}"
+            fi
           done
 
           list=($(ls ./ips/))
           for ((i = 0; i < ${#list[@]}; i++)); do
-            ./mihomo convert-ruleset ipcidr text "./ips/${list[i]}/${list[i]}.list" ../sing-box-ruleset/${list[i]}.mrs
+            if [ -s "./ips/${list[i]}/${list[i]}.list" ]; then
+              echo "Converting ip rule: ${list[i]}"
+              ./mihomo convert-ruleset ipcidr text "./ips/${list[i]}/${list[i]}.list" ../sing-box-ruleset/${list[i]}.mrs
+            else
+              echo "Skipping empty ip rule: ${list[i]}"
+            fi
           done
           
           rm -rf ./mihomo ./domains/ ./ips/
@@ -135,6 +146,8 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           # 清理中间产生的 .json 文件，避免干扰
           rm -f ./tools/*.json
+          # 清理 0 字节的文件，防止发布失败
+          find ./sing-box-ruleset/ -type f -empty -delete
           git add ./sing-box-ruleset/*
           # 检查是否有文件变动，只有在有变动时才 commit
           if git diff --staged --quiet; then
