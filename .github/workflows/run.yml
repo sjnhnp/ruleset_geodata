@@ -36,61 +36,61 @@ jobs:
           # Download for sing-box
           for domain in "${domains[@]}"; do
             mkdir -p "./tools/rules/${domain}/"
-            curl -sSLf "${domains_download_url}/${domain}.list" > "./tools/rules/${domain}/${domain}.list"
+            curl -sSLf --retry 5 --retry-delay 5 --retry-all-errors "${domains_download_url}/${domain}.list" > "./tools/rules/${domain}/${domain}.list"
           done
 
           mkdir -p ./tools/rules/fakeip-filter/
-          curl -sSLf "${domains_download_url}/fakeip-filter.list" | awk '!/(DOMAIN-REGEX,|ntp|stun|time)/' > ./tmp/temp-fakeip-filter-rules.txt
+          curl -sSLf --retry 5 --retry-delay 5 --retry-all-errors "${domains_download_url}/fakeip-filter.list" | awk '!/(DOMAIN-REGEX,|ntp|stun|time)/' > ./tmp/temp-fakeip-filter-rules.txt
           printf "DOMAIN-KEYWORD,ntp\nDOMAIN-KEYWORD,stun\nDOMAIN-KEYWORD,time\n" >> ./tmp/temp-fakeip-filter-rules.txt
-          curl -sSLf "${domains_download_url}/fakeip-filter.list" | awk '/DOMAIN-REGEX,/ && !/(ntp|stun|time)/' >> ./tmp/temp-fakeip-filter-rules.txt
+          curl -sSLf --retry 5 --retry-delay 5 --retry-all-errors "${domains_download_url}/fakeip-filter.list" | awk '/DOMAIN-REGEX,/ && !/(ntp|stun|time)/' >> ./tmp/temp-fakeip-filter-rules.txt
           sort --ignore-case ./tmp/temp-fakeip-filter-rules.txt > ./tools/rules/fakeip-filter/fakeip-filter.list
 
           mkdir -p ./tools/rules/fakeip-filter-lite/
-          curl -sSLf "${domains_download_url}/fakeip-filter-lite.list" | awk '!/(DOMAIN-REGEX,|ntp|stun|time)/' > ./tmp/temp-fakeip-filter-lite-rules.txt
+          curl -sSLf --retry 5 --retry-delay 5 --retry-all-errors "${domains_download_url}/fakeip-filter-lite.list" | awk '!/(DOMAIN-REGEX,|ntp|stun|time)/' > ./tmp/temp-fakeip-filter-lite-rules.txt
           printf "DOMAIN-KEYWORD,ntp\nDOMAIN-KEYWORD,stun\nDOMAIN-KEYWORD,time\n" >> ./tmp/temp-fakeip-filter-lite-rules.txt
           sort --ignore-case ./tmp/temp-fakeip-filter-lite-rules.txt > ./tools/rules/fakeip-filter-lite/fakeip-filter-lite.list
 
           mkdir -p ./tools/rules/applications/
-          curl -sSLf "${domains_download_url}/applications.list" > "./tools/rules/applications/applications.list"
+          curl -sSLf --retry 5 --retry-delay 5 --retry-all-errors "${domains_download_url}/applications.list" > "./tools/rules/applications/applications.list"
 
           for ip in "${ips[@]}"; do
             mkdir -p "./tools/rules/${ip}/"
-            curl -sSLf "${ips_download_url}/${ip}.list" > "./tools/rules/${ip}/${ip}.list"
+            curl -sSLf --retry 5 --retry-delay 5 --retry-all-errors "${ips_download_url}/${ip}.list" > "./tools/rules/${ip}/${ip}.list"
           done
 
           # Download for mihomo
           for domain in "${domains[@]}"; do
             mkdir -p "./tools/domains/${domain}/"
             # Ensure folder exists even if no rules match
-            curl -sSLf "${domains_download_url}/${domain}.list" | awk '/(DOMAIN,|DOMAIN-SUFFIX,)/' | sed -e 's/DOMAIN,//' -e 's/DOMAIN-SUFFIX,/+\./' > "./tools/domains/${domain}/${domain}.list"
-            curl -sSLf "${domains_download_url}/${domain}.list" | awk '/DOMAIN-REGEX,/' | sed -e 's/\\s/ /' -e 's/\\./\./g' -e 's/\[^.\]+/*/g' -e 's/\^\.\*/\^+/' -e 's/.*\^//; s/\$//' >> "./tools/domains/${domain}/${domain}.list"
+            curl -sSLf --retry 5 --retry-delay 5 --retry-all-errors "${domains_download_url}/${domain}.list" | awk '/(DOMAIN,|DOMAIN-SUFFIX,)/' | sed -e 's/DOMAIN,//' -e 's/DOMAIN-SUFFIX,/+\./' > "./tools/domains/${domain}/${domain}.list"
+            curl -sSLf --retry 5 --retry-delay 5 --retry-all-errors "${domains_download_url}/${domain}.list" | awk '/DOMAIN-REGEX,/' | sed -e 's/\\s/ /' -e 's/\\./\./g' -e 's/\[^.\]+/*/g' -e 's/\^\.\*/\^+/' -e 's/.*\^//; s/\$//' >> "./tools/domains/${domain}/${domain}.list"
           done
 
           mkdir -p ./tools/domains/fakeip-filter/
-          curl -sSLf "${domains_download_url}/fakeip-filter.list" | awk '!/DOMAIN-REGEX,/' | sed -e 's/DOMAIN,//' -e 's/DOMAIN-SUFFIX,/+\./' > ./tmp/temp-fakeip-filter-mihomo.txt
+          curl -sSLf --retry 5 --retry-delay 5 --retry-all-errors "${domains_download_url}/fakeip-filter.list" | awk '!/DOMAIN-REGEX,/' | sed -e 's/DOMAIN,//' -e 's/DOMAIN-SUFFIX,/+\./' > ./tmp/temp-fakeip-filter-mihomo.txt
           printf "+.ntp\n+.stun\n+.time\n" >> ./tmp/temp-fakeip-filter-mihomo.txt
-          curl -sSLf "${domains_download_url}/fakeip-filter.list" | awk '/DOMAIN-REGEX,/' | sed -e 's/\\s/ /' -e 's/\\./\./g' -e 's/\[^.\]+/*/g' -e 's/\^\.\*/\^+/' -e 's/.*\^//; s/\$//' >> ./tmp/temp-fakeip-filter-mihomo.txt
+          curl -sSLf --retry 5 --retry-delay 5 --retry-all-errors "${domains_download_url}/fakeip-filter.list" | awk '/DOMAIN-REGEX,/' | sed -e 's/\\s/ /' -e 's/\\./\./g' -e 's/\[^.\]+/*/g' -e 's/\^\.\*/\^+/' -e 's/.*\^//; s/\$//' >> ./tmp/temp-fakeip-filter-mihomo.txt
           sort --ignore-case ./tmp/temp-fakeip-filter-mihomo.txt > ./tools/domains/fakeip-filter/fakeip-filter.list
 
           mkdir -p ./tools/domains/fakeip-filter-lite/
-          curl -sSLf "${domains_download_url}/fakeip-filter-lite.list" | awk '!/DOMAIN-REGEX,/' | sed -e 's/DOMAIN,//' -e 's/DOMAIN-SUFFIX,/+\./' > ./tmp/temp-fakeip-filter-lite-mihomo.txt
+          curl -sSLf --retry 5 --retry-delay 5 --retry-all-errors "${domains_download_url}/fakeip-filter-lite.list" | awk '!/DOMAIN-REGEX,/' | sed -e 's/DOMAIN,//' -e 's/DOMAIN-SUFFIX,/+\./' > ./tmp/temp-fakeip-filter-lite-mihomo.txt
           printf "+.ntp\n+.stun\n+.time\n" >> ./tmp/temp-fakeip-filter-lite-mihomo.txt
           sort --ignore-case ./tmp/temp-fakeip-filter-lite-mihomo.txt > ./tools/domains/fakeip-filter-lite/fakeip-filter-lite.list
 
           for ip in "${ips[@]}"; do
             mkdir -p "./tools/ips/${ip}/"
-            curl -sSLf "${ips_download_url}/${ip}.list" | sed 's/.*,//' > "./tools/ips/${ip}/${ip}.list"
+            curl -sSLf --retry 5 --retry-delay 5 --retry-all-errors "${ips_download_url}/${ip}.list" | sed 's/.*,//' > "./tools/ips/${ip}/${ip}.list"
           done
 
           # Download AWAvenue Ads Rule
           mkdir -p ./tools/awavenue/
-          curl -sSLf "https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/refs/heads/main/Filters/AWAvenue-Ads-Rule-Singbox.json" > ./tools/awavenue/awavenue.json
+          curl -sSLf --retry 5 --retry-delay 5 --retry-all-errors "https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/refs/heads/main/Filters/AWAvenue-Ads-Rule-Singbox.json" > ./tools/awavenue/awavenue.json
           rm -rf ./tmp*
 
       - name: Generate `mihomo` rule-set (mrs)
         run: |
           mkdir -p ./sing-box-ruleset/
-          curl -L https://github.com/DustinWin/proxy-tools/releases/download/mihomo/mihomo-meta-linux-amd64-v3.tar.gz | tar -zx -C ./tools/
+          curl -L --retry 5 --retry-delay 5 --retry-all-errors https://github.com/DustinWin/proxy-tools/releases/download/mihomo/mihomo-meta-linux-amd64-v3.tar.gz | tar -zx -C ./tools/
           mv -f ./tools/CrashCore ./tools/mihomo
           chmod +x ./tools/mihomo
           
@@ -126,7 +126,7 @@ jobs:
 
           # Use a more robust download and extraction logic
           mkdir -p ./tools/sb_bin/
-          curl -L "https://github.com/SagerNet/sing-box/releases/download/${LATEST_TAG}/sing-box-${LATEST_VERSION}-linux-amd64.tar.gz" | tar -zx -C ./tools/sb_bin/
+          curl -L --retry 5 --retry-delay 5 --retry-all-errors "https://github.com/SagerNet/sing-box/releases/download/${LATEST_TAG}/sing-box-${LATEST_VERSION}-linux-amd64.tar.gz" | tar -zx -C ./tools/sb_bin/
           find ./tools/sb_bin/ -name "sing-box" -type f -exec mv {} ./tools/sing-box \;
           rm -rf ./tools/sb_bin/
           
