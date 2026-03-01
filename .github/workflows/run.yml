@@ -20,89 +20,71 @@ jobs:
           UPDATE_VER=$(date -d '+8 hours' +%Y-%m-%d)
           echo "update_version=$UPDATE_VER" >> ${GITHUB_ENV}
           echo "update_version=$UPDATE_VER" >> ${GITHUB_OUTPUT}
+          echo "domains_download_url=https://github.com/DustinWin/domain-list-custom/releases/download/domains" >> ${GITHUB_ENV}
+          echo "ips_download_url=https://github.com/DustinWin/geoip/releases/download/ips" >> ${GITHUB_ENV}
         shell: bash
 
       - name: Clone Repository
         uses: actions/checkout@v6
 
-      - name: Checkout DustinWin/domain-list-custom
-        uses: actions/checkout@v6
-        with:
-          repository: DustinWin/domain-list-custom
-          path: custom
-
-      - name: Checkout DustinWin/geoip
-        uses: actions/checkout@v6
-        with:
-          repository: DustinWin/geoip
-          path: geoip
-
-      - name: Checkout v2fly/domain-list-community
-        uses: actions/checkout@v6
-        with:
-          repository: v2fly/domain-list-community
-          path: community
-
       - name: Download rule source files
         run: |
           mkdir -p ./tools/rules/ ./tools/domains/ ./tools/ips/ ./tmp/
-          domains=(private ads trackerslist microsoft-cn apple-cn google-cn games-cn netflix disney max primevideo appletv youtube tiktok bilibili spotify media games ai networktest tld-proxy gfw proxy cn cn-lite)
+          domains=(private ads trackerslist microsoft-cn apple-cn google-cn games-cn netflix disney max primevideo appletv youtube tiktok bilibili spotify media games ai networktest tld-proxy gfw proxy cn)
           ips=(netflixip mediaip gamesip privateip cnip telegramip)
 
-          # Copy for sing-box
+          # Download for sing-box
           for domain in "${domains[@]}"; do
             mkdir -p "./tools/rules/${domain}/"
-            cp -f "./custom/domains/${domain}.list" "./tools/rules/${domain}/${domain}.list"
+            curl -sSL --retry 5 --retry-delay 5 --retry-all-errors "${domains_download_url}/${domain}.list" -o "./tools/rules/${domain}/${domain}.list" || true
           done
 
           mkdir -p ./tools/rules/fakeip-filter/
-          cp -f "./custom/domains/fakeip-filter.list" ./tmp/temp-fakeip-filter-rules.txt
-          awk '!/(DOMAIN-REGEX,|ntp|stun|time)/' ./tmp/temp-fakeip-filter-rules.txt > ./tmp/temp-fakeip-filter-rules.txt
+          curl -sSL --retry 5 --retry-delay 5 --retry-all-errors "${domains_download_url}/fakeip-filter.list" | awk '!/(DOMAIN-REGEX,|ntp|stun|time)/' > ./tmp/temp-fakeip-filter-rules.txt || true
           printf "DOMAIN-KEYWORD,ntp\nDOMAIN-KEYWORD,stun\nDOMAIN-KEYWORD,time\n" >> ./tmp/temp-fakeip-filter-rules.txt
-          awk '/DOMAIN-REGEX,/ && !/(ntp|stun|time)/' ./custom/domains/fakeip-filter.list >> ./tmp/temp-fakeip-filter-rules.txt
+          curl -sSL --retry 5 --retry-delay 5 --retry-all-errors "${domains_download_url}/fakeip-filter.list" | awk '/DOMAIN-REGEX,/ && !/(ntp|stun|time)/' >> ./tmp/temp-fakeip-filter-rules.txt || true
           sort --ignore-case ./tmp/temp-fakeip-filter-rules.txt > ./tools/rules/fakeip-filter/fakeip-filter.list
 
           mkdir -p ./tools/rules/fakeip-filter-lite/
-          cp -f "./custom/domains/fakeip-filter-lite.list" ./tmp/temp-fakeip-filter-lite-rules.txt
-          awk '!/(DOMAIN-REGEX,|ntp|stun|time)/' ./tmp/temp-fakeip-filter-lite-rules.txt > ./tmp/temp-fakeip-filter-lite-rules.txt
+          curl -sSL --retry 5 --retry-delay 5 --retry-all-errors "${domains_download_url}/fakeip-filter-lite.list" | awk '!/(DOMAIN-REGEX,|ntp|stun|time)/' > ./tmp/temp-fakeip-filter-lite-rules.txt || true
           printf "DOMAIN-KEYWORD,ntp\nDOMAIN-KEYWORD,stun\nDOMAIN-KEYWORD,time\n" >> ./tmp/temp-fakeip-filter-lite-rules.txt
           sort --ignore-case ./tmp/temp-fakeip-filter-lite-rules.txt > ./tools/rules/fakeip-filter-lite/fakeip-filter-lite.list
 
           mkdir -p ./tools/rules/applications/
-          cp -f "./custom/domains/applications.list" "./tools/rules/applications/applications.list"
+          curl -sSL --retry 5 --retry-delay 5 --retry-all-errors "${domains_download_url}/applications.list" -o "./tools/rules/applications/applications.list" || true
 
           for ip in "${ips[@]}"; do
             mkdir -p "./tools/rules/${ip}/"
-            cp -f "./geoip/ips/${ip}.list" "./tools/rules/${ip}/${ip}.list"
+            curl -sSL --retry 5 --retry-delay 5 --retry-all-errors "${ips_download_url}/${ip}.list" -o "./tools/rules/${ip}/${ip}.list" || true
           done
 
-          # Copy for mihomo
+          # Download for mihomo
           for domain in "${domains[@]}"; do
             mkdir -p "./tools/domains/${domain}/"
             # Ensure folder exists even if no rules match
-            awk '/(DOMAIN,|DOMAIN-SUFFIX,)/' "./custom/domains/${domain}.list" | sed -e 's/DOMAIN,//' -e 's/DOMAIN-SUFFIX,/+\./' > "./tools/domains/${domain}/${domain}.list"
-            awk '/DOMAIN-REGEX,/' "./custom/domains/${domain}.list" | sed -e 's/\\s/ /' -e 's/\\./\./g' -e 's/\[^.\]+/*/g' -e 's/\^\.\*/\^+/' -e 's/.*\^//; s/\$//' >> "./tools/domains/${domain}/${domain}.list"
+            curl -sSL --retry 5 --retry-delay 5 --retry-all-errors "${domains_download_url}/${domain}.list" | awk '/(DOMAIN,|DOMAIN-SUFFIX,)/' | sed -e 's/DOMAIN,//' -e 's/DOMAIN-SUFFIX,/+\./' > "./tools/domains/${domain}/${domain}.list" || true
+            curl -sSL --retry 5 --retry-delay 5 --retry-all-errors "${domains_download_url}/${domain}.list" | awk '/DOMAIN-REGEX,/' | sed -e 's/\\s/ /' -e 's/\\./\./g' -e 's/\[^.\]+/*/g' -e 's/\^\.\*/\^+/' -e 's/.*\^//; s/\$//' >> "./tools/domains/${domain}/${domain}.list" || true
           done
 
           mkdir -p ./tools/domains/fakeip-filter/
-          awk '!/DOMAIN-REGEX,/' "./custom/domains/fakeip-filter.list" | sed -e 's/DOMAIN,//' -e 's/DOMAIN-SUFFIX,/+\./' > ./tmp/temp-fakeip-filter-mihomo.txt
+          curl -sSL --retry 5 --retry-delay 5 --retry-all-errors "${domains_download_url}/fakeip-filter.list" | awk '!/DOMAIN-REGEX,/' | sed -e 's/DOMAIN,//' -e 's/DOMAIN-SUFFIX,/+\./' > ./tmp/temp-fakeip-filter-mihomo.txt || true
           printf "+.ntp\n+.stun\n+.time\n" >> ./tmp/temp-fakeip-filter-mihomo.txt
-          awk '/DOMAIN-REGEX,/' "./custom/domains/fakeip-filter.list" | sed -e 's/\\s/ /' -e 's/\\./\./g' -e 's/\[^.\]+/*/g' -e 's/\^\.\*/\^+/' -e 's/.*\^//; s/\$//' >> ./tmp/temp-fakeip-filter-mihomo.txt
+          curl -sSL --retry 5 --retry-delay 5 --retry-all-errors "${domains_download_url}/fakeip-filter.list" | awk '/DOMAIN-REGEX,/' | sed -e 's/\\s/ /' -e 's/\\./\./g' -e 's/\[^.\]+/*/g' -e 's/\^\.\*/\^+/' -e 's/.*\^//; s/\$//' >> ./tmp/temp-fakeip-filter-mihomo.txt || true
           sort --ignore-case ./tmp/temp-fakeip-filter-mihomo.txt > ./tools/domains/fakeip-filter/fakeip-filter.list
 
           mkdir -p ./tools/domains/fakeip-filter-lite/
-          awk '!/DOMAIN-REGEX,/' "./custom/domains/fakeip-filter-lite.list" | sed -e 's/DOMAIN,//' -e 's/DOMAIN-SUFFIX,/+\./' > ./tmp/temp-fakeip-filter-lite-mihomo.txt
+          curl -sSL --retry 5 --retry-delay 5 --retry-all-errors "${domains_download_url}/fakeip-filter-lite.list" | awk '!/DOMAIN-REGEX,/' | sed -e 's/DOMAIN,//' -e 's/DOMAIN-SUFFIX,/+\./' > ./tmp/temp-fakeip-filter-lite-mihomo.txt || true
           printf "+.ntp\n+.stun\n+.time\n" >> ./tmp/temp-fakeip-filter-lite-mihomo.txt
           sort --ignore-case ./tmp/temp-fakeip-filter-lite-mihomo.txt > ./tools/domains/fakeip-filter-lite/fakeip-filter-lite.list
 
           for ip in "${ips[@]}"; do
             mkdir -p "./tools/ips/${ip}/"
-            cp -f "./geoip/ips/${ip}.list" "./tools/ips/${ip}/${ip}.list"
+            curl -sSL --retry 5 --retry-delay 5 --retry-all-errors "${ips_download_url}/${ip}.list" | sed 's/.*,//' > "./tools/ips/${ip}/${ip}.list" || true
           done
 
           # Download AWAvenue Ads Rule
           mkdir -p ./tools/awavenue/
-          curl -sSLf --retry 5 --retry-delay 5 --retry-all-errors "https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/refs/heads/main/Filters/AWAvenue-Ads-Rule-Singbox.json" > ./tools/awavenue/awavenue.json
+          curl -sSL --retry 5 --retry-delay 5 --retry-all-errors "https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/refs/heads/main/Filters/AWAvenue-Ads-Rule-Singbox.json" -o ./tools/awavenue/awavenue.json || true
           rm -rf ./tmp*
 
       - name: Generate `mihomo` rule-set (mrs)
@@ -196,4 +178,3 @@ jobs:
             ./sing-box-ruleset/*.list
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
