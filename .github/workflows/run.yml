@@ -31,7 +31,7 @@ jobs:
         run: |
           mkdir -p ./tools/rules/ ./tools/domains/ ./tools/ips/ ./tmp/
           domains=(private ads trackerslist microsoft-cn apple-cn google-cn games-cn netflix disney max primevideo appletv youtube tiktok bilibili spotify media games ai networktest tld-proxy gfw proxy cn)
-          ips=(netflixip mediaip gamesip privateip cnip telegramip)
+          ips=(netflixip mediaip privateip cnip telegramip)
 
           # Download for sing-box
           for domain in "${domains[@]}"; do
@@ -96,21 +96,21 @@ jobs:
           cd ./tools/
           list=($(ls ./domains/))
           for ((i = 0; i < ${#list[@]}; i++)); do
-            if [ -s "./domains/${list[i]}/${list[i]}.list" ]; then
+            if [ -s "./domains/${list[i]}/${list[i]}.list" ] && ! grep -q "Not Found" "./domains/${list[i]}/${list[i]}.list"; then
               echo "Converting domain rule: ${list[i]}"
               ./mihomo convert-ruleset domain text "./domains/${list[i]}/${list[i]}.list" ../sing-box-ruleset/${list[i]}.mrs
             else
-              echo "Skipping empty domain rule: ${list[i]}"
+              echo "Skipping invalid or empty domain rule: ${list[i]}"
             fi
           done
 
           list=($(ls ./ips/))
           for ((i = 0; i < ${#list[@]}; i++)); do
-            if [ -s "./ips/${list[i]}/${list[i]}.list" ]; then
+            if [ -s "./ips/${list[i]}/${list[i]}.list" ] && ! grep -q "Not Found" "./ips/${list[i]}/${list[i]}.list"; then
               echo "Converting ip rule: ${list[i]}"
               ./mihomo convert-ruleset ipcidr text "./ips/${list[i]}/${list[i]}.list" ../sing-box-ruleset/${list[i]}.mrs
             else
-              echo "Skipping empty ip rule: ${list[i]}"
+              echo "Skipping invalid or empty ip rule: ${list[i]}"
             fi
           done
           
